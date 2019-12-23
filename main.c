@@ -30,12 +30,14 @@ void repartirMazo(Jugador *jugador, int F, Carta mazo[F], int cantEntregar);
 void iniciarlizarDatos(Jugador *jugador);
 void asignarImpresion(Carta mazo);
 // void ordenarMano(Jugador jh);
-void ordenarMano(Jugador *jh);
-void jugar(Jugador *jh, Jugador *jm, int turno);
-void mosquetero(Jugador *jh, Jugador *jm);
-void escudero(Jugador *jh, Jugador *jm);
-void heroe(Jugador *jh, Jugador *jm, int turno);
-void normal(Jugador *jh, Jugador *jm);
+void ordenarMano(Jugador *jh, int n);
+void jugar(Jugador *jh, Jugador *jm, int turno, int n, int *salir);
+void mosquetero(Jugador *jh, Jugador *jm, int n, int *salir);
+void escudero(Jugador *jh, Jugador *jm, int n);
+void heroe(Jugador *jh, Jugador *jm, int turno, int n);
+void normal(Jugador *jh, Jugador *jm, int n);
+void imprimirResultado(Jugador *jh, Jugador *jm, FILE *archivotxt, int turno);
+void calcularResultado(Jugador *jh, Jugador *jm, FILE *archivotxt, int cantPartidas);
 
 int main(int argc, char *argv[])
 {
@@ -49,51 +51,40 @@ int main(int argc, char *argv[])
 	iniciarlizarDatos(jh);
 	iniciarlizarDatos(jm);
 	cargar_mazo(52, mazo);
+	int salir = 0;
+	int repetir = 0, partidas = 1;
+	FILE *archivotxt;
+	archivotxt = fopen("logJuego.txt", "a");
 
 	int i;
 	for (i = 0; i < 5; i++)
 	{
 		printf("\nPartida nro %d \n", i + 1);
+		if (salir == 1)
+		{
+			printf("\nsaliendo\n");
+			//ver si esto es valido
+			//para los mosqueteros ver para setear a estado 1 los estados de las cartas, par aque luego ya no los compare
+			calcularResultado(jh, jm, archivotxt, partidas);
+			break;
+		}
+		
 		if (i < 4)
 		{
 			repartirMazo(jh, 52, mazo, 6);
 			repartirMazo(jm, 52, mazo, 6);
-			ordenarMano(jh);
-			// Pruebas mosquetero
+			ordenarMano(jh, 6);
 			//jugador humano
-			jh->cartasJugador[0].valor = 1;
-			jh->cartasJugador[1].valor = 1;
+			 jh->cartasJugador[0].valor = 1;
+			 jh->cartasJugador[1].valor = 1;
 			// prueba de heroe
-			jh->cartasJugador[2].color = 'N';
-			jh->cartasJugador[2].valor = 2;
-			jh->cartasJugador[3].valor = 13;
-			jh->cartasJugador[5].valor = 1;
-			jh->cartasJugador[4].valor = 1;
-			// jugador maquina
-			jm->cartasJugador[0].valor = 13;
-			jm->cartasJugador[1].valor = 13;
-			// prueba de heroe
-			jm->cartasJugador[2].color = 'R';
-			jm->cartasJugador[2].valor = 2;
-			jm->cartasJugador[3].valor = 1;
-			jm->cartasJugador[5].valor = 13;
-			jm->cartasJugador[4].valor = 13;
-			printf("Valores seteados \n");
-			int j;
-			for (j = 0; j < 6; j++)
-			{
-				printf("| %d |", jh->cartasJugador[j].valor);
-				//aux[i] = jh->cartasJugador[i];
-			}
-			jugar(jh, jm, i + 1);
-			printf("\n Valor mosqueteros JH: %d", jh->mosquetero);
-			printf("\n Valor mosqueteros JM: %d", jm->mosquetero);
-			printf("\n Valor escudero JH: %d", jh->escudero);
-			printf("\n Valor escudero JM: %d", jm->escudero);
-			printf("\n Valor heroe JH: %d", jh->heroe);
-			printf("\n Valor heroe JM: %d", jm->heroe);
-			printf("\n Valor normal JH: %d", jh->normal);
-			printf("\n Valor normal JM: %d", jm->normal);
+			 jh->cartasJugador[2].valor = 1;
+			// jh->cartasJugador[2].valor = 2;
+			 jh->cartasJugador[3].valor = 1;
+			// jh->cartasJugador[5].valor = 1;
+			// jh->cartasJugador[4].valor = 1;
+			jugar(jh, jm, i + 1, 6, &salir);
+
 			//ordenarCartas y tambien la maquina
 			//comparar y asignar puntaje
 		}
@@ -101,12 +92,100 @@ int main(int argc, char *argv[])
 		{
 			repartirMazo(jh, 52, mazo, 2);
 			repartirMazo(jm, 52, mazo, 2);
+			ordenarMano(jh, 2);
+			jugar(jh, jm, i + 1, 2, &salir);
+		}
+		imprimirResultado(jh, jm, archivotxt, i + 1);
+
+		if (i == 4)
+		{
+			printf("\nDesea volver a jugar?	1-Si   2-No");
+			scanf("%d", &repetir);
+			if (repetir == 1)
+			{
+				cargar_mazo(52, mazo);
+				i = 0;
+				partidas++;
+				printf("vamos a repetir\n");
+			}
+			else
+			{
+				salir = 1;
+				calcularResultado(jh, jm, archivotxt, partidas);
+			}
 		}
 	}
 
-	printf("Finalizo partida wey");
+	printf("\nFinalizo partida \n");
+	fclose(archivotxt);
 
 	return 0;
+}
+
+void calcularResultado(Jugador *jh, Jugador *jm, FILE *archivotxt, int cantPartidas)
+{
+	int totalJH = 0, totalJM = 0;
+	totalJH += jh->mosquetero * 8;
+	totalJH += jh->escudero * 3;
+	totalJH += jh->heroe * 2;
+	totalJH += jh->normal * 1;
+
+	totalJM += jm->mosquetero * 8;
+	totalJM += jm->escudero * 3;
+	totalJM += jm->heroe * 2;
+	totalJM += jm->normal * 1;
+	printf("\n--------------------\n");
+	fprintf(archivotxt, "\n--------------------\n");
+	printf("\nTOTAL HUMANO: %d \nTOTAL MAQUINA: %d\n", totalJH, totalJM);
+	fprintf(archivotxt, "\nTOTAL HUMANO: %d \nTOTAL MAQUINA: %d\n", totalJH, totalJM);
+	if (totalJH > totalJM)
+	{
+		printf("\n-------------------------------------------\n");
+		fprintf(archivotxt, "\n-------------------------------------------\n");
+		printf("\nGano Humano	- Cantidad de partidas: %d\n", cantPartidas);
+		fprintf(archivotxt, "\nGano Humano	- Cantidad de partidas: %d\n", cantPartidas);
+		printf("\n-------------------------------------------\n");
+		fprintf(archivotxt, "\n-------------------------------------------\n");
+	}
+	else if (totalJM > totalJH)
+	{
+		printf("\n-------------------------------------------\n");
+		fprintf(archivotxt, "\n-------------------------------------------\n");
+		printf("\nGano Maquina	- Cantidad de partidas: %d\n", cantPartidas);
+		fprintf(archivotxt, "\nGano Maquina	- Cantidad de partidas: %d\n", cantPartidas);
+		printf("\n-------------------------------------------\n");
+		fprintf(archivotxt, "\n-------------------------------------------\n");
+	}
+	else
+	{
+		printf("\n-------------------------------------------\n");
+		fprintf(archivotxt, "\n-------------------------------------------\n");
+		printf("\nEMPATE!	- Cantidad de partidas: %d\n", cantPartidas);
+		fprintf(archivotxt, "\nEMPATE!	- Cantidad de partidas: %d\n", cantPartidas);
+		printf("\n-------------------------------------------\n");
+		fprintf(archivotxt, "\n-------------------------------------------\n");
+	}
+}
+
+void imprimirResultado(Jugador *jh, Jugador *jm, FILE *archivotxt, int turno)
+{
+	fprintf(archivotxt, "\n----- TURNO %d -----\n", turno);
+	printf("\n Valor mosqueteros JH: %d", jh->mosquetero);
+	fprintf(archivotxt, "\n Valor mosqueteros JH: %d", jh->mosquetero);
+	printf("\n Valor mosqueteros JM: %d", jm->mosquetero);
+	fprintf(archivotxt, "\n Valor mosqueteros JM: %d", jm->mosquetero);
+	printf("\n Valor escudero JH: %d", jh->escudero);
+	fprintf(archivotxt, "\n Valor escudero JH: %d", jh->escudero);
+	printf("\n Valor escudero JM: %d", jm->escudero);
+	fprintf(archivotxt, "\n Valor escudero JM: %d", jm->escudero);
+	printf("\n Valor heroe JH: %d", jh->heroe);
+	fprintf(archivotxt, "\n Valor heroe JH: %d", jh->heroe);
+	printf("\n Valor heroe JM: %d", jm->heroe);
+	fprintf(archivotxt, "\n Valor heroe JM: %d", jm->heroe);
+	printf("\n Valor normal JH: %d", jh->normal);
+	fprintf(archivotxt, "\n Valor normal JH: %d", jh->normal);
+	printf("\n Valor normal JM: %d", jm->normal);
+	fprintf(archivotxt, "\n Valor normal JM: %d", jm->normal);
 }
 
 void cargar_mazo(int F, Carta mazo[F])
@@ -157,7 +236,6 @@ void cargar_mazo(int F, Carta mazo[F])
 
 	for (i = 0; i < 52; i++)
 		printf("Carta %d %s \n", i + 1, mazo[i].impresion);
-	//printf("Carta %d: %d %d %c %c \n", i + 1, mazo[i].valor, mazo[i].grupo, mazo[i].color, mazo[i].palo);
 }
 
 char palo(int p)
@@ -193,10 +271,10 @@ void repartirMazo(Jugador *jugador, int F, Carta mazo[F], int cantEntregar)
 		mazo[aux].estado = 1;
 	}
 
-	for (i = 0; i < cantEntregar; i++)
-	{
-		printf("Cartas de jugador tipo: %s %d %c %c \n", jugador->tipo ? "Maquina" : "Humano", jugador->cartasJugador[i].valor, jugador->cartasJugador[i].color, jugador->cartasJugador[i].palo);
-	}
+	// for (i = 0; i < cantEntregar; i++)
+	// {
+	// 	printf("Cartas de jugador tipo: %s %d %c %c \n", jugador->tipo ? "Maquina" : "Humano", jugador->cartasJugador[i].valor, jugador->cartasJugador[i].color, jugador->cartasJugador[i].palo);
+	// }
 }
 
 void iniciarlizarDatos(Jugador *jugador)
@@ -230,60 +308,62 @@ void asignarImpresion(Carta mazo)
 	}
 }
 
-void ordenarMano(Jugador *jh)
+void ordenarMano(Jugador *jh, int n)
 {
-	int orden[6];
+	int orden[n];
 	int i;
-	Carta aux[6];
-	printf("Cartas para ordenar: ");
-	for (i = 0; i < 6; i++)
+	Carta aux[n];
+	printf("\nCartas para ordenar: ");
+	for (i = 0; i < n; i++)
 	{
 		printf("| %s |", jh->cartasJugador[i].impresion);
 		aux[i] = jh->cartasJugador[i];
 	}
-	printf("\n");
-	printf("Ingrese orden de las cartas separadas por espacios: ");
-	scanf("%d %d %d %d %d %d", &orden[0], &orden[1], &orden[2], &orden[3], &orden[4], &orden[5]);
-	getchar();
-	for (i = 0; i < 6; i++)
+	printf("\nIngrese orden de las cartas separadas por espacios: ");
+	if (n == 6)
 	{
-		printf("Valores ingresados: %d \n", orden[i]);
+		scanf("%d %d %d %d %d %d", &orden[0], &orden[1], &orden[2], &orden[3], &orden[4], &orden[5]);
+	}
+	else
+	{
+		scanf("%d %d", &orden[0], &orden[1]);
+	}
+	getchar();
+
+	for (i = 0; i < n; i++)
+	{
+		//printf("Valores ingresados: %d \n", orden[i]);
 		jh->cartasJugador[i] = aux[orden[i] - 1];
 	}
-	// for (i = 0; i < 6; i++)
-	// {
-	// printf("| %s |", jh->cartasJugador[i].impresion);
-	// }
 }
 
-void jugar(Jugador *jh, Jugador *jm, int turno)
+void jugar(Jugador *jh, Jugador *jm, int turno, int n, int *salir)
 {
 	int i;
-	//printf("");
-	printf("Cartas Maquina \n");
-	for (i = 0; i < 6; i++)
+	printf("*** Cartas Maquina *** \n");
+	for (i = 0; i < n; i++)
 	{
 		printf("| %s |", jm->cartasJugador[i].impresion);
 	}
 
-	printf("\nCartas Jugador \n");
-	for (i = 0; i < 6; i++)
+	printf("\n*** Cartas Jugador *** \n");
+	for (i = 0; i < n; i++)
 	{
 		printf("| %s |", jh->cartasJugador[i].impresion);
 	}
 	printf("\n");
-	mosquetero(jh, jm);
-	escudero(jh, jm);
-	heroe(jh, jm, turno);
-	normal(jh, jm);
+	mosquetero(jh, jm, n, salir);
+	escudero(jh, jm, n);
+	heroe(jh, jm, turno, n);
+	normal(jh, jm, n);
 }
 
-void mosquetero(Jugador *jh, Jugador *jm)
+void mosquetero(Jugador *jh, Jugador *jm, int n, int *salir)
 {
 	int i, j, cantH = 0, cantM = 0, posH, posM;
-	for (i = 0; i < 6; i++)
+	for (i = 0; i < n; i++)
 	{
-		for (j = 0; j < 6; j++)
+		for (j = 0; j < n; j++)
 		{
 			if (jh->cartasJugador[i].valor == jh->cartasJugador[j].valor) // si el jugador H tiene cartas iguales las va contando
 			{
@@ -299,9 +379,9 @@ void mosquetero(Jugador *jh, Jugador *jm)
 		cantH = 0;
 	}
 
-	for (i = 0; i < 6; i++)
+	for (i = 0; i < n; i++)
 	{
-		for (j = 0; j < 6; j++)
+		for (j = 0; j < n; j++)
 		{
 			if (jm->cartasJugador[i].valor == jm->cartasJugador[j].valor) // si el jugador M tiene cartas iguales las va contando
 			{
@@ -316,7 +396,7 @@ void mosquetero(Jugador *jh, Jugador *jm)
 		}
 		cantM = 0;
 	}
-	printf("Cantidad Humano: %d  Cantidad Maquina: %d", cantH, cantM);
+	//printf("Cantidad Humano: %d  Cantidad Maquina: %d", cantH, cantM);
 	if (cantH >= 4 || cantM >= 4) //si alguno de ambos tiene 4 cartas de dominancionens iguales
 	{
 		printf("\ningreso if nivel 1");
@@ -348,10 +428,12 @@ void mosquetero(Jugador *jh, Jugador *jm)
 		else if (cantH > cantM)
 		{
 			jh->mosquetero = jh->mosquetero + 1;
+			(*salir) = 1;
 		}
 		else // sino gana el jugador M
 		{
 			jm->mosquetero = jm->mosquetero + 1;
+			(*salir) = 1;
 		}
 	}
 	else //Sino ningun jugador tiene mosqueteros
@@ -360,36 +442,42 @@ void mosquetero(Jugador *jh, Jugador *jm)
 	}
 }
 
-void escudero(Jugador *jh, Jugador *jm)
+void escudero(Jugador *jh, Jugador *jm, int n)
 {
 	int i, j, cantH = 0, cantM = 0, posH, posM;
-	for (i = 0; i < 6; i++)
+	for (i = 0; i < n; i++)
 	{
-		if (jh->cartasJugador[i].valor == 1 && jm->cartasJugador[i].valor == 13) // si jH gana con escudero
+		if (jh->cartasJugador[i].valor == 1 && jm->cartasJugador[i].valor == 13 && (jh->cartasJugador[i].estado == 0 && jm->cartasJugador[i].estado == 0)) // si jH gana con escudero
 		{
 			jh->escudero = jh->escudero + 1;
+			jh->cartasJugador[i].estado = 1;
+			jm->cartasJugador[i].estado = 1;
 		}
-		else if (jm->cartasJugador[i].valor == 1 && jh->cartasJugador[i].valor == 13) // si JM gana con escudero
+		else if (jm->cartasJugador[i].valor == 1 && jh->cartasJugador[i].valor == 13 && (jh->cartasJugador[i].estado == 0 && jm->cartasJugador[i].estado == 0)) // si JM gana con escudero
 		{
 			jm->escudero = jm->escudero + 1;
 		}
 	}
 }
 
-void heroe(Jugador *jh, Jugador *jm, int turno)
+void heroe(Jugador *jh, Jugador *jm, int turno, int n)
 {
 	int i;
-	for (i = 0; i < 6; i++)
+	for (i = 0; i < n; i++)
 	{
 		if (turno % 2 == 0)
 		{
-			if ((jh->cartasJugador[i].valor == jm->cartasJugador[i].valor) && (jh->cartasJugador[i].color == 'R') && (jm->cartasJugador[i].color == 'N'))
+			if ((jh->cartasJugador[i].valor == jm->cartasJugador[i].valor) && (jh->cartasJugador[i].color == 'R') && (jm->cartasJugador[i].color == 'N') && (jh->cartasJugador[i].estado == 0 && jm->cartasJugador[i].estado == 0))
 			{
 				jh->heroe++;
+				jh->cartasJugador[i].estado = 1;
+				jm->cartasJugador[i].estado = 1;
 			}
-			else if ((jm->cartasJugador[i].valor == jh->cartasJugador[i].valor) && (jm->cartasJugador[i].color == 'R') && (jh->cartasJugador[i].color == 'N'))
+			else if ((jm->cartasJugador[i].valor == jh->cartasJugador[i].valor) && (jm->cartasJugador[i].color == 'R') && (jh->cartasJugador[i].color == 'N') && (jh->cartasJugador[i].estado == 0 && jm->cartasJugador[i].estado == 0))
 			{
 				jm->heroe++;
+				jh->cartasJugador[i].estado = 1;
+				jm->cartasJugador[i].estado = 1;
 			}
 			else if ((jm->cartasJugador[i].valor == jh->cartasJugador[i].valor))
 			{
@@ -398,13 +486,17 @@ void heroe(Jugador *jh, Jugador *jm, int turno)
 		}
 		else
 		{
-			if ((jh->cartasJugador[i].valor == jm->cartasJugador[i].valor) && (jh->cartasJugador[i].color == 'N') && (jm->cartasJugador[i].color == 'R'))
+			if ((jh->cartasJugador[i].valor == jm->cartasJugador[i].valor) && (jh->cartasJugador[i].color == 'N') && (jm->cartasJugador[i].color == 'R') && (jh->cartasJugador[i].estado == 0 && jm->cartasJugador[i].estado == 0))
 			{
 				jh->heroe++;
+				jh->cartasJugador[i].estado = 1;
+				jm->cartasJugador[i].estado = 1;
 			}
-			else if ((jm->cartasJugador[i].valor == jh->cartasJugador[i].valor) && (jm->cartasJugador[i].color == 'N') && (jh->cartasJugador[i].color == 'R'))
+			else if ((jm->cartasJugador[i].valor == jh->cartasJugador[i].valor) && (jm->cartasJugador[i].color == 'N') && (jh->cartasJugador[i].color == 'R') && (jh->cartasJugador[i].estado == 0 && jm->cartasJugador[i].estado == 0))
 			{
 				jm->heroe++;
+				jh->cartasJugador[i].estado = 1;
+				jm->cartasJugador[i].estado = 1;
 			}
 			else if ((jm->cartasJugador[i].valor == jh->cartasJugador[i].valor))
 			{
@@ -414,18 +506,22 @@ void heroe(Jugador *jh, Jugador *jm, int turno)
 	}
 }
 
-void normal(Jugador *jh, Jugador *jm)
+void normal(Jugador *jh, Jugador *jm, int n)
 {
 	int i;
-	for (i = 0; i < 6; i++)
+	for (i = 0; i < n; i++)
 	{
-		if (jh->cartasJugador[i].valor > jm->cartasJugador[i].valor)
+		if (jh->cartasJugador[i].valor > jm->cartasJugador[i].valor && (jh->cartasJugador[i].estado == 0 && jm->cartasJugador[i].estado == 0))
 		{
 			jh->normal++;
+			jh->cartasJugador[i].estado = 1;
+			jm->cartasJugador[i].estado = 1;
 		}
-		else if (jm->cartasJugador[i].valor > jh->cartasJugador[i].valor)
+		else if (jm->cartasJugador[i].valor > jh->cartasJugador[i].valor && (jh->cartasJugador[i].estado == 0 && jm->cartasJugador[i].estado == 0))
 		{
 			jm->normal++;
+			jh->cartasJugador[i].estado = 1;
+			jm->cartasJugador[i].estado = 1;
 		}
 	}
 }

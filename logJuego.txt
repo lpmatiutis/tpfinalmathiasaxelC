@@ -1,0 +1,41 @@
+
+----- TURNO 1 -----
+
+ Valor mosqueteros JH: 1
+ Valor mosqueteros JM: 0
+ Valor escudero JH: 1
+ Valor escudero JM: 0
+ Valor heroe JH: 0
+ Valor heroe JM: 0
+ Valor normal JH: 1
+ Valor normal JM: 4
+----- TURNO 1 -----
+
+ Valor mosqueteros JH: 1
+ Valor mosqueteros JM: 0
+ Valor escudero JH: 0
+ Valor escudero JM: 0
+ Valor heroe JH: 0
+ Valor heroe JM: 1
+ Valor normal JH: 2
+ Valor normal JM: 3
+----- TURNO 1 -----
+
+ Valor mosqueteros JH: 1
+ Valor mosqueteros JM: 0
+ Valor escudero JH: 0
+ Valor escudero JM: 0
+ Valor heroe JH: 0
+ Valor heroe JM: 0
+ Valor normal JH: 0
+ Valor normal JM: 5
+--------------------
+
+TOTAL HUMANO: 8 
+TOTAL MAQUINA: 5
+
+-------------------------------------------
+
+Gano Humano	- Cantidad de partidas: 1
+
+-------------------------------------------
