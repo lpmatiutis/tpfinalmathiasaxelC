@@ -7,6 +7,10 @@ AUTORES
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
+//#include <graphics.h>
+/*
+Estructura de carta, que es asignada a los jugadores
+*/
 typedef struct carta
 {
 	int valor, grupo, estado;
@@ -14,6 +18,9 @@ typedef struct carta
 	char impresion[4];
 } Carta;
 
+/*
+Estructura de jugador, para realizar las partidas
+*/
 typedef struct jugador
 {
 	int tipo, puntaje, normal, heroe, escudero, mosquetero;
@@ -23,13 +30,9 @@ typedef struct jugador
 
 void cargar_mazo(int F, Carta mazo[F]);
 char palo(int p);
-// void repartirMazo(Jugador jugador, int F, Carta mazo[F], int cantEntregar);
 void repartirMazo(Jugador *jugador, int F, Carta mazo[F], int cantEntregar);
-
-//void iniciarlizarDatos(Jugador jugador);
 void iniciarlizarDatos(Jugador *jugador);
 void asignarImpresion(Carta mazo);
-// void ordenarMano(Jugador jh);
 void ordenarMano(Jugador *jh, int n);
 void jugar(Jugador *jh, Jugador *jm, int turno, int n, int *salir);
 void mosquetero(Jugador *jh, Jugador *jm, int n, int *salir);
@@ -56,37 +59,24 @@ int main(int argc, char *argv[])
 	FILE *archivotxt;
 	archivotxt = fopen("logJuego.txt", "a");
 
+	printf("### Partida nro: %d ###", partidas);
 	int i;
 	for (i = 0; i < 5; i++)
 	{
-		printf("\nPartida nro %d \n", i + 1);
+		printf("\n--- Turno nro %d ---\n", i + 1);
 		if (salir == 1)
 		{
 			printf("\nsaliendo\n");
-			//ver si esto es valido
-			//para los mosqueteros ver para setear a estado 1 los estados de las cartas, par aque luego ya no los compare
 			calcularResultado(jh, jm, archivotxt, partidas);
 			break;
 		}
-		
+
 		if (i < 4)
 		{
 			repartirMazo(jh, 52, mazo, 6);
 			repartirMazo(jm, 52, mazo, 6);
 			ordenarMano(jh, 6);
-			//jugador humano
-			 jh->cartasJugador[0].valor = 1;
-			 jh->cartasJugador[1].valor = 1;
-			// prueba de heroe
-			 jh->cartasJugador[2].valor = 1;
-			// jh->cartasJugador[2].valor = 2;
-			 jh->cartasJugador[3].valor = 1;
-			// jh->cartasJugador[5].valor = 1;
-			// jh->cartasJugador[4].valor = 1;
 			jugar(jh, jm, i + 1, 6, &salir);
-
-			//ordenarCartas y tambien la maquina
-			//comparar y asignar puntaje
 		}
 		else
 		{
@@ -106,7 +96,7 @@ int main(int argc, char *argv[])
 				cargar_mazo(52, mazo);
 				i = 0;
 				partidas++;
-				printf("vamos a repetir\n");
+				printf("### Partida nro: %d ###", partidas);
 			}
 			else
 			{
@@ -116,14 +106,16 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	printf("\nFinalizo partida \n");
+	printf("\nFinalizo partida\n");
 	fclose(archivotxt);
 
 	return 0;
 }
 
+//Metodo para calcular el resultado final de las partidas
 void calcularResultado(Jugador *jh, Jugador *jm, FILE *archivotxt, int cantPartidas)
 {
+	//Se calcula segun los valores obtenidos en la partida
 	int totalJH = 0, totalJM = 0;
 	totalJH += jh->mosquetero * 8;
 	totalJH += jh->escudero * 3;
@@ -167,6 +159,7 @@ void calcularResultado(Jugador *jh, Jugador *jm, FILE *archivotxt, int cantParti
 	}
 }
 
+// Metodo para imprimir los resultados por turnos de los jugadores
 void imprimirResultado(Jugador *jh, Jugador *jm, FILE *archivotxt, int turno)
 {
 	fprintf(archivotxt, "\n----- TURNO %d -----\n", turno);
@@ -188,6 +181,7 @@ void imprimirResultado(Jugador *jh, Jugador *jm, FILE *archivotxt, int turno)
 	fprintf(archivotxt, "\n Valor normal JM: %d", jm->normal);
 }
 
+// Metodo para generar un mazo a traves de la estructura carta
 void cargar_mazo(int F, Carta mazo[F])
 {
 	int i, j, c = 0;
@@ -238,6 +232,7 @@ void cargar_mazo(int F, Carta mazo[F])
 		printf("Carta %d %s \n", i + 1, mazo[i].impresion);
 }
 
+// Metodo para asignar los palos a las cartas
 char palo(int p)
 {
 	switch (p)
@@ -257,6 +252,7 @@ char palo(int p)
 	}
 }
 
+// Metodo para repartir el mazo a los jugadores por turno
 void repartirMazo(Jugador *jugador, int F, Carta mazo[F], int cantEntregar)
 {
 	int i;
@@ -270,13 +266,9 @@ void repartirMazo(Jugador *jugador, int F, Carta mazo[F], int cantEntregar)
 		jugador->cartasJugador[i] = mazo[aux];
 		mazo[aux].estado = 1;
 	}
-
-	// for (i = 0; i < cantEntregar; i++)
-	// {
-	// 	printf("Cartas de jugador tipo: %s %d %c %c \n", jugador->tipo ? "Maquina" : "Humano", jugador->cartasJugador[i].valor, jugador->cartasJugador[i].color, jugador->cartasJugador[i].palo);
-	// }
 }
 
+//Se inicializan los datos de los jugadores
 void iniciarlizarDatos(Jugador *jugador)
 {
 	jugador->puntaje = 0;
@@ -286,6 +278,7 @@ void iniciarlizarDatos(Jugador *jugador)
 	jugador->normal = 0;
 }
 
+//Metodo para asignar impresion personalizable a las cartas
 void asignarImpresion(Carta mazo)
 {
 	switch (mazo.valor)
@@ -308,6 +301,7 @@ void asignarImpresion(Carta mazo)
 	}
 }
 
+// Metodo para ordenar la mano del jugador segun el criterio del mismo
 void ordenarMano(Jugador *jh, int n)
 {
 	int orden[n];
@@ -332,11 +326,11 @@ void ordenarMano(Jugador *jh, int n)
 
 	for (i = 0; i < n; i++)
 	{
-		//printf("Valores ingresados: %d \n", orden[i]);
 		jh->cartasJugador[i] = aux[orden[i] - 1];
 	}
 }
 
+// Metodo en el cual se realiza la jugada luego de que el jugador halla ordenado su mazo
 void jugar(Jugador *jh, Jugador *jm, int turno, int n, int *salir)
 {
 	int i;
@@ -353,11 +347,17 @@ void jugar(Jugador *jh, Jugador *jm, int turno, int n, int *salir)
 	}
 	printf("\n");
 	mosquetero(jh, jm, n, salir);
+	if ((*salir) == 1)
+	{
+		//gana directo quien posee algun mosquetero
+		return;
+	}
 	escudero(jh, jm, n);
 	heroe(jh, jm, turno, n);
 	normal(jh, jm, n);
 }
 
+// Metodo para puntuacion tipo mosquetero
 void mosquetero(Jugador *jh, Jugador *jm, int n, int *salir)
 {
 	int i, j, cantH = 0, cantM = 0, posH, posM;
@@ -372,7 +372,6 @@ void mosquetero(Jugador *jh, Jugador *jm, int n, int *salir)
 		}
 		if (cantH >= 4)
 		{
-			printf("\nse encontro iguales en posicion Jugador: %d", i);
 			posH = i;
 			break;
 		}
@@ -390,20 +389,15 @@ void mosquetero(Jugador *jh, Jugador *jm, int n, int *salir)
 		}
 		if (cantM >= 4)
 		{
-			printf("\nse encontro iguales en posicion Maquina: %d", i);
 			posM = i;
 			break;
 		}
 		cantM = 0;
 	}
-	//printf("Cantidad Humano: %d  Cantidad Maquina: %d", cantH, cantM);
 	if (cantH >= 4 || cantM >= 4) //si alguno de ambos tiene 4 cartas de dominancionens iguales
 	{
-		printf("\ningreso if nivel 1");
 		if (cantH == cantM) //si ambos tienen 4 cartas iguales(casi imposible)
 		{
-			printf("\ningreso if nivel 2");
-			printf("\n Valor j1: %d  Valor j2: %d", jh->cartasJugador[posH].valor, jm->cartasJugador[posM].valor);
 			if (jh->cartasJugador[posH].valor == jm->cartasJugador[posM].valor) // si son de la misma denominacion entonces se anulan
 			{
 				printf("Son iguales mosqueteros \n");
@@ -436,15 +430,12 @@ void mosquetero(Jugador *jh, Jugador *jm, int n, int *salir)
 			(*salir) = 1;
 		}
 	}
-	else //Sino ningun jugador tiene mosqueteros
-	{
-		printf("No mosqueteros");
-	}
 }
 
+// Metodo para puntuacion tipo escudero
 void escudero(Jugador *jh, Jugador *jm, int n)
 {
-	int i, j, cantH = 0, cantM = 0, posH, posM;
+	int i;
 	for (i = 0; i < n; i++)
 	{
 		if (jh->cartasJugador[i].valor == 1 && jm->cartasJugador[i].valor == 13 && (jh->cartasJugador[i].estado == 0 && jm->cartasJugador[i].estado == 0)) // si jH gana con escudero
@@ -456,10 +447,13 @@ void escudero(Jugador *jh, Jugador *jm, int n)
 		else if (jm->cartasJugador[i].valor == 1 && jh->cartasJugador[i].valor == 13 && (jh->cartasJugador[i].estado == 0 && jm->cartasJugador[i].estado == 0)) // si JM gana con escudero
 		{
 			jm->escudero = jm->escudero + 1;
+			jh->cartasJugador[i].estado = 1;
+			jm->cartasJugador[i].estado = 1;
 		}
 	}
 }
 
+// Metodo para puntacion tipo heroe
 void heroe(Jugador *jh, Jugador *jm, int turno, int n)
 {
 	int i;
@@ -506,6 +500,7 @@ void heroe(Jugador *jh, Jugador *jm, int turno, int n)
 	}
 }
 
+// Metodo para puntuacion tipo normal
 void normal(Jugador *jh, Jugador *jm, int n)
 {
 	int i;
