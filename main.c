@@ -41,6 +41,7 @@ void heroe(Jugador *jh, Jugador *jm, int turno, int n);
 void normal(Jugador *jh, Jugador *jm, int n);
 void imprimirResultado(Jugador *jh, Jugador *jm, FILE *archivotxt, int turno);
 void calcularResultado(Jugador *jh, Jugador *jm, FILE *archivotxt, int cantPartidas);
+void ordenarMAquina(Jugador *jm, int n);
 
 int main(int argc, char *argv[])
 {
@@ -66,7 +67,6 @@ int main(int argc, char *argv[])
 		printf("\n--- Turno nro %d ---\n", i + 1);
 		if (salir == 1)
 		{
-			printf("\nsaliendo\n");
 			calcularResultado(jh, jm, archivotxt, partidas);
 			break;
 		}
@@ -76,6 +76,8 @@ int main(int argc, char *argv[])
 			repartirMazo(jh, 52, mazo, 6);
 			repartirMazo(jm, 52, mazo, 6);
 			ordenarMano(jh, 6);
+			ordenarMAquina(jm, 6);
+
 			jugar(jh, jm, i + 1, 6, &salir);
 		}
 		else
@@ -83,6 +85,7 @@ int main(int argc, char *argv[])
 			repartirMazo(jh, 52, mazo, 2);
 			repartirMazo(jm, 52, mazo, 2);
 			ordenarMano(jh, 2);
+			ordenarMAquina(jm, 2);
 			jugar(jh, jm, i + 1, 2, &salir);
 		}
 		imprimirResultado(jh, jm, archivotxt, i + 1);
@@ -94,7 +97,7 @@ int main(int argc, char *argv[])
 			if (repetir == 1)
 			{
 				cargar_mazo(52, mazo);
-				i = 0;
+				i = -1;
 				partidas++;
 				printf("### Partida nro: %d ###", partidas);
 			}
@@ -200,11 +203,8 @@ void cargar_mazo(int F, Carta mazo[F])
 			{
 				mazo[c].color = 'N'; //negro
 			}
-			//
-			//setear palo con switch
+			//setear palo
 			mazo[c].palo = palo(mazo[c].grupo);
-			//asignarImpresion(mazo[c]);
-
 			//asginar impresion
 			switch (mazo[c].valor)
 			{
@@ -521,14 +521,40 @@ void normal(Jugador *jh, Jugador *jm, int n)
 	}
 }
 
-// void ordenarMAquina(){
-// 	for (size_t i = 0; i < count; i++)
-// 	{
-// 		for (size_t i = 0; i < count; i++)
-// 		{
-// 			/* code */
-// 		}
+void ordenarMAquina(Jugador *jm, int n)
+{
+	int i, j;
+	Carta aux;
+	for (i = 1; i < n; i++)
+	{
+		for (j = 0; j < n - 1; j++)
+		{
+			if (jm->cartasJugador[j].color > jm->cartasJugador[j + 1].color) //Ordenamos la carte por su color primeramente
+			{
+				aux = jm->cartasJugador[j + 1];
+				jm->cartasJugador[j + 1] = jm->cartasJugador[j];
+				jm->cartasJugador[j] = aux;
+			}
+		}
+	}
 
-// 	}
+	for (i = 1; i < n; i++)
+	{
+		for (j = 0; j < n - 1; j++)
+		{
+			// Una vez ordenadas por color procedemos a ordenarlas de menor a mayor por su valor
+			if (jm->cartasJugador[j].color == jm->cartasJugador[j + 1].color && jm->cartasJugador[j].valor > jm->cartasJugador[j + 1].valor)
+			{
+				aux = jm->cartasJugador[j + 1];
+				jm->cartasJugador[j + 1] = jm->cartasJugador[j];
+				jm->cartasJugador[j] = aux;
+			}
+		}
+	}
 
-// }
+	// for (i = 0; i < n; i++)
+	// {
+	// 	printf("\nCarta valor: %d   palo: %c   color: %c    grupo: %d", jm->cartasJugador[i].valor, jm->cartasJugador[i].palo, jm->cartasJugador[i].color, jm->cartasJugador[i].grupo);
+	// }
+	// printf("\n");
+}
